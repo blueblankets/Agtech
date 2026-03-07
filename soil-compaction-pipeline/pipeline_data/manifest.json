@@ -1,0 +1,11 @@
+{
+    "timestamp_utc": "2026-03-07T21:07:11.362762",
+    "total_pixels_generated": 1599,
+    "valid_pixels": 1599,
+    "validation_pass_rate_pct": 100.0,
+    "api_health": {
+        "API A: CDSE (NDVI)": "SUCCESS",
+        "API B: SoilGrids (WCS)": "SUCCESS",
+        "API C: ASABE (Telemetry)": "SUCCESS"
+    }
+}

@@ -1,0 +1,17 @@
+global:
+  judge_mode: false # When true, fall back to robust mock payloads
+
+apis:
+  cdse:
+    client_id: "foodgao500@gmail.com"
+    client_secret: "BillMoose999!"
+    default_cloud_threshold: 20
+    default_date_range_days: 14
+    
+  soilgrids:
+    base_url: "https://maps.isric.org/mapserv?map=/map/soilgrids.map"
+    
+  asabe:
+    enabled: true
+    path_density_m: 3.0
+    working_width_multiplier: 1.05
