@@ -1,0 +1,18 @@
+global:
+  judge_mode: false
+
+apis:
+  cdse:
+    # Register free at dataspace.copernicus.eu — OIDC browser flow handles auth
+    client_id: ""
+    client_secret: ""
+    default_cloud_threshold: 20
+    default_date_range_days: 14
+
+  soilgrids:
+    base_url: "https://maps.isric.org/mapserv?map=/map/soilgrids.map"
+
+  asabe:
+    enabled: true
+    path_density_m: 3.0
+    working_width_multiplier: 1.05

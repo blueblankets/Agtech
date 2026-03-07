@@ -1,0 +1,6 @@
+Exception: cannot import name 'MapieRegressor' from 'mapie.regression' (C:\Users\foodg\AppData\Local\Programs\Python\Python313\Lib\site-packages\mapie\regression\__init__.py)
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\foodg\OneDrive\Documents\Kalshi_projects\Agtech\test_mapie.py", line 4, in <module>
+    from mapie.regression import MapieRegressor
+ImportError: cannot import name 'MapieRegressor' from 'mapie.regression' (C:\Users\foodg\AppData\Local\Programs\Python\Python313\Lib\site-packages\mapie\regression\__init__.py)
