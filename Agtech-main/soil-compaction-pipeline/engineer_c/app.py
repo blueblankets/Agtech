@@ -172,7 +172,7 @@ def _compute_summary(payload: list[dict]) -> dict:
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  🌾 Field Analyzer — Soil Compaction Pipeline")
+    print("  🌾 CompactIQ — Soil Compaction Pipeline")
     print("  Open http://localhost:5000 in your browser")
     print("=" * 60)
     app.run(host="0.0.0.0", port=5000, debug=True)

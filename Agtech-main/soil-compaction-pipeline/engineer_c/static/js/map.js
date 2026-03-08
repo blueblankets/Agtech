@@ -124,11 +124,15 @@ const FieldMap = (() => {
                 .filter(v => v != null && !isNaN(v));
 
             if (vals.length > 0) {
-                stats[f] = {
-                    min: Math.min(...vals),
-                    max: Math.max(...vals),
-                    mean: vals.reduce((a, b) => a + b, 0) / vals.length,
-                };
+                // Use reduce instead of Math.min(...vals) to avoid call stack overflow
+                // on large arrays (100k+ pixels)
+                let min = vals[0], max = vals[0], sum = 0;
+                for (let i = 0; i < vals.length; i++) {
+                    if (vals[i] < min) min = vals[i];
+                    if (vals[i] > max) max = vals[i];
+                    sum += vals[i];
+                }
+                stats[f] = { min, max, mean: sum / vals.length };
             } else {
                 stats[f] = { min: 0, max: 1, mean: 0.5 };
             }
