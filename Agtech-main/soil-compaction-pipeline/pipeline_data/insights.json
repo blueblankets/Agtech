@@ -1,89 +1,89 @@
 {
-  "field_summary": "This field exhibits widespread soil compaction and severe vegetation stress, with 99.7% of the area showing NDVI values below 0.70 and a mean NDVI of 0.216. Despite a mean S\u00f6hne vertical stress of 0.165 MPa, the ML pipeline has identified a pervasive need for targeted deep tillage across 99.7% of the field, with a strong economic justification (mean ROI of 1.319).",
-  "risk_assessment": "The highest risk zones encompass nearly the entire field, as indicated by the 'Targeted Deep Tillage' action prescribed for 29,383 out of 29,468 pixels. This widespread risk is primarily driven by the severe vegetation stress (mean NDVI 0.216, indicating significant root restriction or nutrient lockout) and the ML pipeline's overall assessment, which integrates S\u00f6hne stress propagation, NDVI, and XGBoost-predicted ripper depths. While the mean S\u00f6hne stress (0.165 MPa) and bulk density (1.54 g/cm\u00b3) do not individually exceed the high thresholds for severe compaction, the combined evidence, particularly the low NDVI and the pipeline's explicit action recommendation, points to significant subsurface limitations impacting crop health and yield.",
+  "field_summary": "The field exhibits severe vegetation stress (mean NDVI 0.129) across all pixels, indicating significant growth limitations. However, this stress is not attributable to soil compaction, as mean vertical stress is very low (0.163 MPa) and bulk density (1.52 g/cm\u00b3) is below critical levels for severe compaction.",
+  "risk_assessment": "The highest risk is severe vegetation stress, with 100% of the field showing NDVI below 0.30. This indicates significant root restriction or nutrient lockout, but *not* due to mechanical compaction. The low mean stress (0.163 MPa) and bulk density (1.52 g/cm\u00b3) confirm that the soil structure itself is not severely compacted. The mean clay percentage of 26.8% suggests a loam to clay loam texture, which benefits from organic matter for aggregate stability.",
   "recommendations": [
     {
-      "action": "Mechanical Tillage for Compaction Remediation",
-      "implement_type": "SUBSOILER with PARABOLIC (bentleg) shanks",
-      "operating_depth_cm": 36,
+      "action_priority": 1,
+      "action_type": "Soil Amendment Application",
+      "description": "Given the clay percentage (26.8%) is below 40% and compaction is not severe, apply humic acid to enhance aggregate stability, water holding capacity, and nutrient availability. This will support root development and overall plant health.",
+      "implement_type": "Light disc harrow or field cultivator",
+      "operating_depth_cm": "5-10 cm (for shallow incorporation)",
+      "amendment_type": "Granular Humic Acid",
+      "amendment_rate": "30 lbs/acre",
+      "cover_crop_species": "N/A"
+    },
+    {
+      "action_priority": 2,
+      "action_type": "Biological Drilling and Soil Stabilization",
+      "description": "Immediately after cash crop harvest or amendment application, seed a multi-species cover crop cocktail. This will biologically improve soil structure, create biopores, and enhance organic matter, addressing the underlying causes of vegetation stress not related to compaction.",
+      "implement_type": "Cover crop seeder or drill",
+      "operating_depth_cm": "1-2 cm (for seeding)",
       "amendment_type": "N/A",
       "amendment_rate": "N/A",
-      "rationale": "Based on the ML pipeline's recommendation for 'Targeted Deep Tillage' across 99.7% of the field and the strong economic ROI (mean 1.319), mechanical intervention is crucial. The mean predicted ripper depth is 33.1 cm; setting the shank tip to 36 cm ensures fracturing 1-2 inches (2.5-5 cm) below the compaction layer. Parabolic shanks are selected to minimize topsoil disturbance and maximize subsurface fracturing efficiency, aligning with conservation tillage principles."
+      "cover_crop_species": "Mandatory Taproots: Daikon radish (5-8 lbs/acre) or turnips (3-5 lbs/acre); Mandatory Fibrous Roots: Cereal rye (40-60 lbs/acre) or oats (30-50 lbs/acre); Recommended Legumes: Crimson clover (10-15 lbs/acre) or hairy vetch (15-20 lbs/acre)"
     },
     {
-      "action": "Soil Structure Enhancement Amendment",
-      "implement_type": "Integrated with tillage or broadcast post-tillage",
-      "operating_depth_cm": "Into tillage zone",
-      "amendment_type": "HUMIC ACID (granular)",
-      "amendment_rate": "30 lbs/acre",
-      "rationale": "With a mean clay percentage of 29.8%, which is below 40%, gypsum is contraindicated. Humic acid will be applied to form stable humic-clay complexes, increasing aggregate stability, water holding capacity, and cation exchange capacity (CEC), while reducing the soil's modulus of rupture to resist future compaction."
-    },
-    {
-      "action": "Biological Drilling and Soil Stabilization",
-      "implement_type": "Cover Crop Seeder",
-      "operating_depth_cm": "Standard cover crop seeding depth",
-      "amendment_type": "Multi-species Cover Crop Cocktail",
-      "amendment_rate": "N/A (seed rate per species)",
-      "cover_crop_species": [
-        "Daikon/Tillage Radish (Taproot)",
-        "Cereal Rye (Fibrous Root)",
-        "Crimson Clover (Legume)"
-      ],
-      "rationale": "Immediately following mechanical subsoiling, seed a multi-species cover crop cocktail. Daikon radish will biologically drill into the newly fractured subsoil, creating permanent biopores. Cereal rye will stabilize the topsoil with its dense fibrous roots and glomalin exudates. Crimson clover will fix nitrogen, accelerating organic matter accumulation and enhancing long-term soil bearing capacity."
+      "action_priority": 3,
+      "action_type": "Further Diagnostic Investigation",
+      "description": "Since severe vegetation stress (NDVI < 0.30) is present without significant soil compaction, conduct comprehensive soil nutrient testing (macro and micronutrients), plant tissue analysis, and a thorough pest and disease scouting survey. This will identify other potential limiting factors for plant growth.",
+      "implement_type": "Soil probe, plant tissue sampling kit, scouting tools",
+      "operating_depth_cm": "Typical soil sampling depths (e.g., 0-15 cm, 15-30 cm)",
+      "amendment_type": "N/A",
+      "amendment_rate": "N/A",
+      "cover_crop_species": "N/A"
     }
   ],
-  "economic_outlook": "The economic analysis indicates that mechanical tillage is highly justified, with a mean ROI of 1.319 and 100% of the field pixels exceeding the 1.2 ROI threshold. This suggests that the projected yield increases and operational efficiencies from remediating compaction will significantly outweigh the costs of mechanical intervention, amendments, and cover cropping.",
-  "confidence_note": "The mean prediction interval width for ripper depth is 11.4 cm, indicating a moderate level of uncertainty in the exact depth of the compaction layer.",
+  "economic_outlook": "The mean ROI for mechanical intervention is 0.98, which falls into the 'Marginal' category (0.8-1.2). Therefore, mechanical tillage is not economically justified at this time. The recommended biological-only intervention (humic acid and cover crops) represents a more cost-effective approach, with estimated costs of $30-60/acre for humic acid and $40-80/acre for cover crop seed and establishment. These interventions are expected to improve soil health, increase water infiltration, and enhance nutrient cycling, leading to long-term yield benefits and increased resilience against future stresses, with a higher likelihood of positive ROI compared to mechanical tillage.",
+  "confidence_note": "The mean prediction interval width for ripper depth is 11.4 cm, indicating moderate uncertainty in precise depth estimations if mechanical tillage were to be considered.",
   "metadata": {
     "model": "gemini-2.5-flash",
-    "generated_at": "2026-03-08T07:02:29.572668+00:00"
+    "generated_at": "2026-03-08T07:27:27.029118+00:00"
   },
   "input_summary": {
-    "total_pixels": 29468,
-    "valid_pixels": 29468,
+    "total_pixels": 72210,
+    "valid_pixels": 72210,
     "invalid_pixels": 0,
     "action_distribution": {
-      "Targeted Deep Tillage": 29383,
-      "None": 85
+      "Monitor - Not Economically Viable": 72210
     },
     "stress_stats": {
-      "mean": 0.165,
-      "max": 0.168,
-      "p90": 0.167,
+      "mean": 0.163,
+      "max": 0.165,
+      "p90": 0.164,
       "p10": 0.163
     },
     "ndvi_stats": {
-      "mean": 0.216,
-      "min": -0.122,
-      "max": 0.767,
-      "pct_below_070": 99.7
+      "mean": 0.129,
+      "min": -0.011,
+      "max": 0.286,
+      "pct_below_070": 100.0
     },
     "soil": {
-      "clay_pct_mean": 29.8,
+      "clay_pct_mean": 26.8,
       "clay_pct_range": [
-        25.6,
-        36.7
+        23.7,
+        30.1
       ],
-      "bulk_density_mean": 1.54
+      "bulk_density_mean": 1.52
     },
     "roi_stats": {
-      "mean": 1.319,
-      "max": 1.347,
-      "pct_above_1_2": 100.0
+      "mean": 0.98,
+      "max": 0.99,
+      "pct_above_1_2": 0.0
     },
     "confidence": {
       "mean_interval_width_cm": 11.4,
-      "max_interval_width_cm": 12.0
+      "max_interval_width_cm": 12.1
     },
     "ripper_depth_stats": {
-      "mean": 33.1,
-      "p10": 32.9,
-      "p90": 33.7
+      "mean": 32.9,
+      "p10": 32.8,
+      "p90": 33.0
     },
     "data_sources": {
       "API A: CDSE (NDVI)": "LIVE",
       "API B: SoilGrids (WCS)": "LIVE",
-      "API C: ASABE (Telemetry)": "SIMULATED (108241 points)"
+      "API C: ASABE (Telemetry)": "SIMULATED (232114 points)"
     }
   }
 }

@@ -19,12 +19,16 @@ VALID_ACTIONS = {
 
 ROI_TRIGGER_THRESHOLD = 1.2 # must exceed to recommend tillage
 NDVI_STRESS_THRESHOLD = 0.70 # NDVI below this = potential compaction
-TILLAGE_COST_PER_ACRE = 30.0 # USD — deep ripping cost including fuel + labor
+TILLAGE_COST_PER_ACRE = 40.0 # USD — deep ripping with subsoiler (fuel + labor + wear)
 COMPACTION_LOSS_PER_ACRE = 120.0 # USD — yield loss from compaction (corn/soy avg)
 
 # Stress level at which full yield loss occurs
 # 0.5 MPa is the agronomic threshold for severe compaction
 STRESS_FULL_DAMAGE_MPA = 0.5
+
+# Minimum stress to even consider tillage action
+# Below this, the soil isn't compacted enough to warrant intervention
+MIN_COMPACTION_STRESS_MPA = 0.15
 
 def calculate_roi(stress_mpa: float, 
                   tillage_cost: float = TILLAGE_COST_PER_ACRE, 

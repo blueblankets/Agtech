@@ -1,12 +1,12 @@
 {
-    "timestamp_utc": "2026-03-08T07:01:42.555140",
-    "total_pixels_generated": 29468,
-    "valid_pixels": 29468,
+    "timestamp_utc": "2026-03-08T07:26:40.229842",
+    "total_pixels_generated": 72210,
+    "valid_pixels": 72210,
     "validation_pass_rate_pct": 100.0,
     "api_health": {
         "API A: CDSE (NDVI)": "LIVE",
         "API B: SoilGrids (WCS)": "LIVE",
-        "API C: ASABE (Telemetry)": "SIMULATED (108241 points)"
+        "API C: ASABE (Telemetry)": "SIMULATED (232114 points)"
     },
     "transparency_note": "LIVE = real API data. SYNTHETIC = locally generated fallback. SIMULATED = ASABE algorithmic generator (by design)."
 }

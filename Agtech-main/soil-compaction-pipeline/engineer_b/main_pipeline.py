@@ -15,7 +15,7 @@ from engineer_b.economic_filter import determine_action
 from engineer_b.constants import (
     calculate_roi, ROI_TRIGGER_THRESHOLD, NDVI_STRESS_THRESHOLD,
     TILLAGE_COST_PER_ACRE, COMPACTION_LOSS_PER_ACRE,
-    STRESS_FULL_DAMAGE_MPA,
+    STRESS_FULL_DAMAGE_MPA, MIN_COMPACTION_STRESS_MPA,
 )
 
 logger = logging.getLogger(__name__)
@@ -121,11 +121,19 @@ def run_model_pipeline(master_df: pd.DataFrame, model_dir: str) -> pd.DataFrame:
         ndvi_vals = master_df.loc[ml_ready, "ndvi"].values
         hi_vals = master_df.loc[ml_ready, "mapie_upper_bound"].values
 
-        # Vectorized action determination
+        # Vectorized action determination with stress guard
+        # Guard 1: minimum stress threshold — soil below this isn't compacted
+        stress_ok = stress_vals >= MIN_COMPACTION_STRESS_MPA
+        
+        # Guard 2 + 3: vegetation stress + ROI threshold
         actions = np.where(
-            (hi_vals > 0) & (ndvi_vals < NDVI_STRESS_THRESHOLD),
-            np.where(roi_vals > ROI_TRIGGER_THRESHOLD, "Targeted Deep Tillage", "Monitor - Not Economically Viable"),
-            "None"
+            ~stress_ok,
+            "None",  # stress too low, soil is fine
+            np.where(
+                (hi_vals > 0) & (ndvi_vals < NDVI_STRESS_THRESHOLD),
+                np.where(roi_vals > ROI_TRIGGER_THRESHOLD, "Targeted Deep Tillage", "Monitor - Not Economically Viable"),
+                "None"
+            )
         )
         master_df.loc[ml_ready, "action"] = actions
     logger.info("Economic filter complete in %.1fs", time.time() - t3)
