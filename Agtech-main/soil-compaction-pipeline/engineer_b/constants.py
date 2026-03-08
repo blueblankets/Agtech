@@ -19,21 +19,30 @@ VALID_ACTIONS = {
 
 ROI_TRIGGER_THRESHOLD = 1.2 # must exceed to recommend tillage
 NDVI_STRESS_THRESHOLD = 0.70 # NDVI below this = potential compaction
-TILLAGE_COST_PER_ACRE = 20.0 # USD
-COMPACTION_LOSS_PER_ACRE = 30.0 # USD yield loss estimate
+TILLAGE_COST_PER_ACRE = 30.0 # USD — deep ripping cost including fuel + labor
+COMPACTION_LOSS_PER_ACRE = 120.0 # USD — yield loss from compaction (corn/soy avg)
+
+# Stress level at which full yield loss occurs
+# 0.5 MPa is the agronomic threshold for severe compaction
+STRESS_FULL_DAMAGE_MPA = 0.5
 
 def calculate_roi(stress_mpa: float, 
                   tillage_cost: float = TILLAGE_COST_PER_ACRE, 
                   compaction_loss: float = COMPACTION_LOSS_PER_ACRE) -> float:
     """
-    Linear scaling: stress 0 -> 1 MPa = 0% loss; 5 MPa = 100% loss.
-    ROI = avoided_loss / tillage_cost
+    ROI = (avoided_yield_loss) / tillage_cost
+    
+    Linear scaling from 0 to STRESS_FULL_DAMAGE_MPA:
+    - At 0.15 MPa stress → ROI ≈ 1.2 (decision boundary)
+    - At 0.25 MPa stress → ROI ≈ 2.0 (strong tillage signal)
+    - At 0.50 MPa stress → ROI = 4.0 (maximum)
     """
     if stress_mpa is None or math.isnan(stress_mpa):
         return 0.0
     
-    # "stress >1.5 MPa -> compaction cost $30/acre" as an example in prompt, 
-    # but the reference implementation says linearly scaled.
-    loss_fraction = min(stress_mpa / 5.0, 1.0)
+    if stress_mpa <= 0:
+        return 0.0
+    
+    loss_fraction = min(stress_mpa / STRESS_FULL_DAMAGE_MPA, 1.0)
     avoided_loss = loss_fraction * compaction_loss
     return avoided_loss / tillage_cost if tillage_cost > 0 else 0.0

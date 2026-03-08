@@ -1,6 +1,11 @@
 /**
  * Leaflet Map Module
  * Handles map initialization, polygon drawing, and choropleth rendering.
+ *
+ * Key design:
+ * - Uses Canvas renderer for performance with 100k+ pixels
+ * - Dynamic min/max color scaling per-field (not fixed 0-60)
+ * - 10m pixel squares with tooltips
  */
 
 const FieldMap = (() => {
@@ -8,39 +13,35 @@ const FieldMap = (() => {
     let drawLayer;
     let resultLayer;
     let currentField = 'pred_ripper_depth_cm';
+    let payloadCache = null;  // store for recoloring
+    let dataStats = {};       // min/max per field
 
-    // Color ramp: green → yellow → red (for ripper depth)
-    const DEPTH_COLORS = [
-        { val: 0, color: '#1a9850' },
-        { val: 15, color: '#91cf60' },
-        { val: 25, color: '#d9ef8b' },
-        { val: 35, color: '#fee08b' },
-        { val: 45, color: '#fc8d59' },
-        { val: 60, color: '#d73027' },
+    // Viridis-inspired color ramp (works well for continuous data)
+    const VIRIDIS = [
+        '#440154', '#482777', '#3f4a8a', '#31678e',
+        '#26838f', '#1f9d8a', '#6cce5a', '#b6de2b', '#fee825'
     ];
 
-    // Color ramp for ROI
-    const ROI_COLORS = [
-        { val: 0, color: '#d73027' },
-        { val: 0.5, color: '#fc8d59' },
-        { val: 0.8, color: '#fee08b' },
-        { val: 1.0, color: '#d9ef8b' },
-        { val: 1.5, color: '#91cf60' },
-        { val: 2.0, color: '#1a9850' },
-    ];
+    // Red-Yellow-Green diverging ramp (good for depth/stress)
+    const RYG = ['#1a9850', '#66bd63', '#a6d96a', '#d9ef8b', '#fee08b', '#fdae61', '#f46d43', '#d73027'];
 
     // Action colors
     const ACTION_COLORS = {
         'Targeted Deep Tillage': '#ea4335',
         'Monitor - Not Economically Viable': '#fbbc04',
         'None': '#34a853',
+        'INVALID_DATA': '#888888',
     };
+
+    // Canvas renderer for performance
+    const canvasRenderer = L.canvas({ padding: 0.5 });
 
     function init() {
         map = L.map('map', {
             center: [39.0, -89.0],
             zoom: 6,
             zoomControl: true,
+            preferCanvas: true,
         });
 
         // Satellite tile layer (Esri World Imagery — free, no API key)
@@ -104,10 +105,36 @@ const FieldMap = (() => {
         // Layer selector
         document.getElementById('layer-select').addEventListener('change', (e) => {
             currentField = e.target.value;
-            if (resultLayer.getLayers().length > 0) {
-                recolorLayer();
+            if (payloadCache) {
+                renderPayload(payloadCache);
             }
         });
+    }
+
+    /**
+     * Compute min/max stats for numeric fields in the payload.
+     */
+    function computeStats(payload) {
+        const fields = ['pred_ripper_depth_cm', 'roi', 'mapie_lower_bound', 'mapie_upper_bound'];
+        const stats = {};
+
+        fields.forEach(f => {
+            const vals = payload
+                .map(r => r[f])
+                .filter(v => v != null && !isNaN(v));
+
+            if (vals.length > 0) {
+                stats[f] = {
+                    min: Math.min(...vals),
+                    max: Math.max(...vals),
+                    mean: vals.reduce((a, b) => a + b, 0) / vals.length,
+                };
+            } else {
+                stats[f] = { min: 0, max: 1, mean: 0.5 };
+            }
+        });
+
+        return stats;
     }
 
     /**
@@ -115,9 +142,14 @@ const FieldMap = (() => {
      */
     function renderPayload(payload) {
         resultLayer.clearLayers();
+        payloadCache = payload;
+        dataStats = computeStats(payload);
 
         const pixelSizeM = 10;
         const half = pixelSizeM / 2;
+
+        console.log(`[Map] Rendering ${payload.length} pixels (field: ${currentField})`);
+        console.log(`[Map] Stats:`, dataStats[currentField]);
 
         payload.forEach(record => {
             const lat = record.lat;
@@ -139,17 +171,23 @@ const FieldMap = (() => {
             const rect = L.rectangle(bounds, {
                 color: color,
                 fillColor: color,
-                fillOpacity: 0.75,
+                fillOpacity: 0.8,
                 weight: 0,
+                renderer: canvasRenderer,  // Canvas for performance
             });
 
-            // Tooltip
-            rect.bindTooltip(buildTooltip(record), {
-                className: 'pixel-tooltip',
-                sticky: true,
+            // Tooltip (only bind on hover for performance)
+            rect.on('mouseover', function () {
+                if (!this._tooltipBound) {
+                    this.bindTooltip(buildTooltip(record), {
+                        className: 'pixel-tooltip',
+                        sticky: true,
+                    });
+                    this._tooltipBound = true;
+                    this.openTooltip();
+                }
             });
 
-            rect.pixelData = record; // store for recoloring
             resultLayer.addLayer(rect);
         });
 
@@ -163,20 +201,7 @@ const FieldMap = (() => {
     }
 
     /**
-     * Recolor existing layers when switching fields.
-     */
-    function recolorLayer() {
-        resultLayer.eachLayer(layer => {
-            if (layer.pixelData) {
-                const color = getColor(layer.pixelData, currentField);
-                layer.setStyle({ color, fillColor: color });
-            }
-        });
-        updateLegend(currentField);
-    }
-
-    /**
-     * Get color for a pixel based on field and value.
+     * Get color for a pixel based on field and DYNAMIC min/max.
      */
     function getColor(record, field) {
         if (field === 'action') {
@@ -184,17 +209,29 @@ const FieldMap = (() => {
             return ACTION_COLORS[action] || '#888';
         }
 
-        const val = record[field] || 0;
-        const ramp = field === 'roi' ? ROI_COLORS : DEPTH_COLORS;
+        const val = record[field];
+        if (val == null || isNaN(val)) return '#333';
 
-        // Interpolate through color ramp
-        for (let i = 0; i < ramp.length - 1; i++) {
-            if (val <= ramp[i + 1].val) {
-                const t = (val - ramp[i].val) / (ramp[i + 1].val - ramp[i].val);
-                return lerpColor(ramp[i].color, ramp[i + 1].color, Math.max(0, Math.min(1, t)));
-            }
-        }
-        return ramp[ramp.length - 1].color;
+        const stats = dataStats[field];
+        if (!stats) return '#888';
+
+        // Normalize to 0-1 using actual data range
+        const range = stats.max - stats.min;
+        const t = range > 0 ? (val - stats.min) / range : 0.5;
+
+        // Use RYG ramp (green=low depth → red=high depth)
+        return sampleRamp(RYG, Math.max(0, Math.min(1, t)));
+    }
+
+    /**
+     * Sample a color ramp at position t (0-1).
+     */
+    function sampleRamp(ramp, t) {
+        const idx = t * (ramp.length - 1);
+        const lo = Math.floor(idx);
+        const hi = Math.min(lo + 1, ramp.length - 1);
+        const frac = idx - lo;
+        return lerpColor(ramp[lo], ramp[hi], frac);
     }
 
     /**
@@ -228,7 +265,7 @@ const FieldMap = (() => {
     }
 
     /**
-     * Update sidebar legend based on current field.
+     * Update sidebar legend based on current field with DYNAMIC range.
      */
     function updateLegend(field) {
         const section = document.getElementById('legend-section');
@@ -246,20 +283,23 @@ const FieldMap = (() => {
                     </div>
                 `).join('');
         } else {
-            const ramp = field === 'roi' ? ROI_COLORS : DEPTH_COLORS;
+            const stats = dataStats[field] || { min: 0, max: 1 };
             const label = field === 'roi' ? 'ROI' : 'Ripper Depth (cm)';
             title.textContent = `Legend — ${label}`;
 
-            const gradientStops = ramp.map((s, i) =>
-                `${s.color} ${(i / (ramp.length - 1) * 100).toFixed(0)}%`
+            const ramp = RYG;
+            const gradientStops = ramp.map((c, i) =>
+                `${c} ${(i / (ramp.length - 1) * 100).toFixed(0)}%`
             ).join(', ');
+
+            const mid = ((stats.min + stats.max) / 2).toFixed(1);
 
             content.innerHTML = `
                 <div class="legend-gradient" style="background: linear-gradient(90deg, ${gradientStops})"></div>
                 <div class="legend-labels">
-                    <span>${ramp[0].val}</span>
-                    <span>${ramp[Math.floor(ramp.length / 2)].val}</span>
-                    <span>${ramp[ramp.length - 1].val}</span>
+                    <span>${stats.min.toFixed(1)}</span>
+                    <span>${mid}</span>
+                    <span>${stats.max.toFixed(1)}</span>
                 </div>
             `;
         }
@@ -268,5 +308,5 @@ const FieldMap = (() => {
     // Initialize on load
     document.addEventListener('DOMContentLoaded', init);
 
-    return { renderPayload, recolorLayer };
+    return { renderPayload };
 })();

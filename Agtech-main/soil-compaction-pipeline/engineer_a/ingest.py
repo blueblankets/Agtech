@@ -62,10 +62,12 @@ def align_and_reproject(
         master_m["clay_pct"] = pd.NA
         master_m["bulk_density"] = pd.NA
 
-    # 2. Join Tractor Telemetry (nearest within 5m)
+    # 2. Join Tractor Telemetry (nearest — no distance limit because
+    #    the tractor covers the entire field; every pixel is affected by
+    #    the equipment that traversed nearest to it)
     if not ops_m.empty:
-        logger.info("Joining ASABE telemetry (nearest, max 5m)...")
-        master_m = gpd.sjoin_nearest(master_m, ops_m, how="left", max_distance=5.0, rsuffix="ops")
+        logger.info("Joining ASABE telemetry (nearest, field-wide)...")
+        master_m = gpd.sjoin_nearest(master_m, ops_m, how="left", rsuffix="ops")
         master_m = master_m.drop(columns=["index_ops"], errors="ignore")
     else:
         logger.warning("Tractor GDF empty — equipment cols will be NaN (valid state)")

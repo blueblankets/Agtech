@@ -12,7 +12,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from engineer_b.physics import sohne_stress
 from engineer_b.ml_inference import load_mapie_model, run_ml_inference_batch
 from engineer_b.economic_filter import determine_action
-from engineer_b.constants import calculate_roi, ROI_TRIGGER_THRESHOLD, NDVI_STRESS_THRESHOLD
+from engineer_b.constants import (
+    calculate_roi, ROI_TRIGGER_THRESHOLD, NDVI_STRESS_THRESHOLD,
+    TILLAGE_COST_PER_ACRE, COMPACTION_LOSS_PER_ACRE,
+    STRESS_FULL_DAMAGE_MPA,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -107,7 +111,11 @@ def run_model_pipeline(master_df: pd.DataFrame, model_dir: str) -> pd.DataFrame:
     t3 = time.time()
     if ml_ready.any():
         stress_vals = master_df.loc[ml_ready, "max_subsoil_stress_mpa"].values
-        roi_vals = np.minimum(stress_vals / 5.0, 1.0) * 30.0 / 20.0  # vectorized calculate_roi
+
+        # Vectorized calculate_roi (linear from 0 to STRESS_FULL_DAMAGE_MPA)
+        loss_fraction = np.clip(stress_vals / STRESS_FULL_DAMAGE_MPA, 0.0, 1.0)
+        avoided_loss = loss_fraction * COMPACTION_LOSS_PER_ACRE
+        roi_vals = avoided_loss / TILLAGE_COST_PER_ACRE
         master_df.loc[ml_ready, "roi"] = roi_vals
 
         ndvi_vals = master_df.loc[ml_ready, "ndvi"].values
