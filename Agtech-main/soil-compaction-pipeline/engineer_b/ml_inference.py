@@ -46,6 +46,11 @@ def train_prototype_model(output_dir: str):
     print(f"Saved model.ubj and mapie_model.pkl to {output_dir}")
 
 
+def load_mapie_model(mapie_model_path: str):
+    """Load MAPIE model once for reuse across all pixels."""
+    return joblib.load(mapie_model_path)
+
+
 def run_ml_inference(features: list, mapie_model_path: str):
     mapie = joblib.load(mapie_model_path)
     X_infer = np.array([features])
@@ -63,6 +68,28 @@ def run_ml_inference(features: list, mapie_model_path: str):
     hi = float(np.clip(hi, 0, 60))
 
     return depth, lo, hi
+
+
+def run_ml_inference_batch(X: np.ndarray, mapie_model):
+    """
+    Batch inference: predict all pixels at once.
+    X: (N, 4) array of [ndvi, clay_pct, bulk_density, max_stress]
+    Returns: depths (N,), lowers (N,), uppers (N,)
+    """
+    pred, intervals = mapie_model.predict_interval(X)
+
+    depths = np.clip(pred, 0, 60)
+    lo = intervals[:, 0, 0]
+    hi = intervals[:, 1, 0]
+
+    # Swap where lo > hi
+    swap = lo > hi
+    lo[swap], hi[swap] = hi[swap].copy(), lo[swap].copy()
+
+    lo = np.clip(lo, 0, 60)
+    hi = np.clip(hi, 0, 60)
+
+    return depths, lo, hi
 
 
 if __name__ == "__main__":

@@ -10,15 +10,36 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from engineer_b.physics import sohne_stress
-from engineer_b.ml_inference import run_ml_inference
+from engineer_b.ml_inference import load_mapie_model, run_ml_inference_batch
 from engineer_b.economic_filter import determine_action
-from engineer_b.constants import calculate_roi
+from engineer_b.constants import calculate_roi, ROI_TRIGGER_THRESHOLD, NDVI_STRESS_THRESHOLD
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+def _vectorized_sohne_stress(z_cm, weight_kg, tire_width_m, bulk_density, clay_pct):
+    """Vectorized Söhne (1953) vertical stress propagation."""
+    z_m = z_cm / 100.0
+
+    pressure_pa = 150000.0 + (clay_pct * 500.0)
+    contact_area_m2 = (weight_kg * 9.81) / pressure_pa
+    contact_area_m2 = np.maximum(contact_area_m2, 1e-10)  # avoid div by zero
+
+    radius_m = np.sqrt(contact_area_m2 / np.pi)
+
+    # Söhne concentration factor k (bulk_density dependent)
+    k = np.where(bulk_density < 1.4, 4.0, np.where(bulk_density < 1.6, 5.0, 6.0))
+
+    sigma_pa = (weight_kg * 9.81 / contact_area_m2) * (1 - (z_m / np.sqrt(z_m**2 + radius_m**2))**k)
+    return sigma_pa / 1e6  # Pa -> MPa
+
+
 def run_model_pipeline(master_df: pd.DataFrame, model_dir: str) -> pd.DataFrame:
+    import time
+    t0 = time.time()
+
     # Initialize output columns
+    n = len(master_df)
     master_df["max_subsoil_stress_mpa"] = np.nan
     master_df["depth_of_max_stress_cm"] = np.nan
     master_df["pred_ripper_depth_cm"] = np.nan
@@ -26,56 +47,83 @@ def run_model_pipeline(master_df: pd.DataFrame, model_dir: str) -> pd.DataFrame:
     master_df["mapie_upper_bound"] = np.nan
     master_df["roi"] = 0.0
     master_df["action"] = "None"
-    
-    DEPTHS_CM = [10, 20, 30]
+
+    # ─── Pre-load model ONCE ───
     mapie_path = os.path.join(model_dir, "mapie_model.pkl")
     if not os.path.exists(mapie_path):
         raise FileNotFoundError(f"Model files missing at {mapie_path}")
+    logger.info("Loading MAPIE model (once)...")
+    mapie_model = load_mapie_model(mapie_path)
+    logger.info("Model loaded in %.1fs", time.time() - t0)
 
-    for idx, row in master_df.iterrows():
-        if not row["data_valid"]:
-            master_df.at[idx, "action"] = "INVALID_DATA"
-            continue
+    # ─── Stage 3: Vectorized Physics ───
+    t1 = time.time()
+    valid_mask = master_df["data_valid"].fillna(False).astype(bool)
+    has_equip = valid_mask & master_df["equipment_weight_kg"].notna()
 
-        # Stage 3: Physics
-        max_stress = float('nan')
-        depth_of_max = float('nan')
-        if pd.notna(row["equipment_weight_kg"]):
-            stresses = [
-                sohne_stress(d, row["equipment_weight_kg"], row["tire_width_m"], row["bulk_density"], row["clay_pct"])
-                for d in DEPTHS_CM
-            ]
-            valid_stresses = [s for s in stresses if not math.isnan(s)]
-            if valid_stresses:
-                max_stress = max(valid_stresses)
-                # Cap at 5.0 MPa constraint
-                if max_stress > 5.0:
-                    logger.warning(f"Pixel {row['pixel_id']}: stress {max_stress} capped to 5.0")
-                    max_stress = 5.0
-                depth_of_max = DEPTHS_CM[stresses.index(max_stress) if max_stress in stresses else 0]
-        else:
-            master_df.at[idx, "action"] = "None"
-            continue
-        
-        master_df.at[idx, "max_subsoil_stress_mpa"] = max_stress
-        master_df.at[idx, "depth_of_max_stress_cm"] = depth_of_max
-        
-        # Stage 4: ML
-        features = [row["ndvi"], row["clay_pct"], row["bulk_density"], max_stress]
-        if any(pd.isna(f) for f in features):
-            master_df.at[idx, "action"] = "INVALID_DATA"
-            logger.warning(f"Pixel {row['pixel_id']}: NaN in ML features, skipping.")
-            continue
-            
-        depth, lo, hi = run_ml_inference(features, mapie_path)
-        master_df.at[idx, "pred_ripper_depth_cm"] = depth
-        master_df.at[idx, "mapie_lower_bound"] = lo
-        master_df.at[idx, "mapie_upper_bound"] = hi
-        
-        # Stage 5: Economic filter
-        roi = calculate_roi(max_stress)
-        master_df.at[idx, "roi"] = roi
-        master_df.at[idx, "action"] = determine_action(roi, hi, row["ndvi"])
+    master_df.loc[~valid_mask, "action"] = "INVALID_DATA"
+
+    if has_equip.any():
+        weight = master_df.loc[has_equip, "equipment_weight_kg"].values.astype(float)
+        tire_w = master_df.loc[has_equip, "tire_width_m"].values.astype(float)
+        bd = master_df.loc[has_equip, "bulk_density"].values.astype(float)
+        clay = master_df.loc[has_equip, "clay_pct"].values.astype(float)
+
+        DEPTHS_CM = [10.0, 20.0, 30.0]
+        stress_all = np.column_stack([
+            _vectorized_sohne_stress(d, weight, tire_w, bd, clay) for d in DEPTHS_CM
+        ])
+        # Cap at 5.0 MPa
+        stress_all = np.clip(stress_all, 0, 5.0)
+
+        max_stress = np.max(stress_all, axis=1)
+        depth_of_max_idx = np.argmax(stress_all, axis=1)
+        depth_of_max = np.array(DEPTHS_CM)[depth_of_max_idx]
+
+        master_df.loc[has_equip, "max_subsoil_stress_mpa"] = max_stress
+        master_df.loc[has_equip, "depth_of_max_stress_cm"] = depth_of_max
+    logger.info("Physics complete in %.1fs", time.time() - t1)
+
+    # ─── Stage 4: Batch ML Inference ───
+    t2 = time.time()
+    # Build ML feature mask: has equipment + all features non-null
+    ml_cols = ["ndvi", "clay_pct", "bulk_density", "max_subsoil_stress_mpa"]
+    ml_ready = has_equip.copy()
+    for col in ml_cols:
+        ml_ready = ml_ready & master_df[col].notna()
+
+    if ml_ready.any():
+        X = master_df.loc[ml_ready, ml_cols].values.astype(float)
+        logger.info("Running batch ML inference on %d pixels...", len(X))
+
+        depths, lo, hi = run_ml_inference_batch(X, mapie_model)
+
+        master_df.loc[ml_ready, "pred_ripper_depth_cm"] = depths
+        master_df.loc[ml_ready, "mapie_lower_bound"] = lo
+        master_df.loc[ml_ready, "mapie_upper_bound"] = hi
+    logger.info("ML inference complete in %.1fs", time.time() - t2)
+
+    # ─── Stage 5: Vectorized Economic Filter ───
+    t3 = time.time()
+    if ml_ready.any():
+        stress_vals = master_df.loc[ml_ready, "max_subsoil_stress_mpa"].values
+        roi_vals = np.minimum(stress_vals / 5.0, 1.0) * 30.0 / 20.0  # vectorized calculate_roi
+        master_df.loc[ml_ready, "roi"] = roi_vals
+
+        ndvi_vals = master_df.loc[ml_ready, "ndvi"].values
+        hi_vals = master_df.loc[ml_ready, "mapie_upper_bound"].values
+
+        # Vectorized action determination
+        actions = np.where(
+            (hi_vals > 0) & (ndvi_vals < NDVI_STRESS_THRESHOLD),
+            np.where(roi_vals > ROI_TRIGGER_THRESHOLD, "Targeted Deep Tillage", "Monitor - Not Economically Viable"),
+            "None"
+        )
+        master_df.loc[ml_ready, "action"] = actions
+    logger.info("Economic filter complete in %.1fs", time.time() - t3)
+
+    total = time.time() - t0
+    logger.info("═══ Engineer B pipeline complete: %d pixels in %.1fs (%.0f px/sec) ═══", n, total, n / total if total > 0 else 0)
 
     return master_df
 

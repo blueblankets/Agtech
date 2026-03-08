@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Analyzer — Soil Compaction Pipeline</title>
+    <meta name="description"
+        content="Interactive soil compaction analysis with satellite imagery, ML predictions, and agronomic recommendations">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+
+    <!-- ═══ Top Navigation Bar ═══ -->
+    <header id="topbar">
+        <div class="topbar-left">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <span class="logo-text">Field Analyzer</span>
+            </div>
+        </div>
+        <div class="topbar-center">
+            <div class="layer-selector">
+                <label for="layer-select">Layer:</label>
+                <select id="layer-select">
+                    <option value="pred_ripper_depth_cm">Ripper Depth (cm)</option>
+                    <option value="roi">ROI</option>
+                    <option value="action">Prescription Action</option>
+                </select>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button id="btn-export" class="btn btn-secondary" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                Export Shapefile
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══ Main Content ═══ -->
+    <main id="app">
+        <!-- Left Sidebar -->
+        <aside id="sidebar">
+            <!-- Pipeline Status -->
+            <section id="pipeline-status" class="card">
+                <h3>Pipeline Status</h3>
+                <div id="status-indicator" class="status idle">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Draw a polygon to begin</span>
+                </div>
+                <div id="progress-bar-container" class="hidden">
+                    <div id="progress-bar"></div>
+                </div>
+                <p id="status-detail" class="detail-text"></p>
+            </section>
+
+            <!-- Summary Stats -->
+            <section id="summary-section" class="card hidden">
+                <h3>Agronomic Data</h3>
+                <div id="summary-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Total Pixels</span>
+                        <span id="stat-total" class="stat-value">—</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Acreage</span>
+                        <span id="stat-acreage" class="stat-value">—</span>
+                    </div>
+                </div>
+                <div id="action-table-container"></div>
+            </section>
+
+            <!-- LLM Insights -->
+            <section id="insights-section" class="card hidden">
+                <h3>AI Analysis</h3>
+                <div id="insights-model" class="insight-badge"></div>
+                <div id="field-summary" class="insight-block"></div>
+                <h4>Recommendations</h4>
+                <div id="recommendations-list"></div>
+                <h4>Economic Outlook</h4>
+                <div id="economic-outlook" class="insight-block"></div>
+                <h4>Confidence</h4>
+                <div id="confidence-note" class="insight-block"></div>
+            </section>
+
+            <!-- Legend -->
+            <section id="legend-section" class="card hidden">
+                <h3 id="legend-title">Legend</h3>
+                <div id="legend-content"></div>
+            </section>
+        </aside>
+
+        <!-- Map Container -->
+        <div id="map-container">
+            <div id="map"></div>
+            <!-- Draw Prompt Overlay -->
+            <div id="draw-prompt">
+                <div class="prompt-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                        <line x1="8" y1="2" x2="8" y2="18" />
+                        <line x1="16" y1="6" x2="16" y2="22" />
+                    </svg>
+                    <h2>Draw Your Field Boundary</h2>
+                    <p>Use the polygon tool in the top-left corner to outline your field on the satellite map.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- App JS -->
+    <script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>
