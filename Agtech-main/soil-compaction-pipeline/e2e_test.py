@@ -19,27 +19,47 @@ if BASE_DIR not in sys.path:
 from engineer_a.ingest import ingest_and_align
 from engineer_b.main_pipeline import run_model_pipeline, save_final_payload
 from engineer_b.verify_and_visualize import verify_and_visualize
+from e2e_visualize import e2e_visualize
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger("e2e")
 
 # ─── Sample GeoJSON: ~40-acre Iowa farm polygon ───
 SAMPLE_GEOJSON = {
-    "type": "FeatureCollection",
-    "features": [{
-        "type": "Feature",
-        "properties": {},
-        "geometry": {
-            "type": "Polygon",
-            "coordinates": [[
-                [-93.593740, 41.516540],
-                [-93.590000, 41.516540],
-                [-93.590000, 41.513000],
-                [-93.593740, 41.513000],
-                [-93.593740, 41.516540]
-            ]]
-        }
-    }]
+  "type": "FeatureCollection",
+  "features": [
+    {
+  "type": "Feature",
+  "properties": {},
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -92.853387,
+          38.457924
+        ],
+        [
+          -92.853,
+          38.450665
+        ],
+        [
+          -92.842353,
+          38.451538
+        ],
+        [
+          -92.843727,
+          38.457621
+        ],
+        [
+          -92.853387,
+          38.457924
+        ]
+      ]
+    ]
+  }
+}
+  ]
 }
 
 

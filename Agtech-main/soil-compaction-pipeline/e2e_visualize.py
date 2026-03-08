@@ -61,9 +61,25 @@ def e2e_visualize(master_parquet: str, payload_json: str, output_dir: str):
     print(f"\nAction distribution:\n{df['action'].value_counts()}")
 
     # --- Build 2D spatial grid via lat/lon binning ---
-    GRID = 40
-    df['lat_bin'] = pd.cut(df['lat'], bins=GRID, labels=False)
-    df['lon_bin'] = pd.cut(df['lon'], bins=GRID, labels=False)
+    lat_min, lat_max = df['lat'].min(), df['lat'].max()
+    lon_min, lon_max = df['lon'].min(), df['lon'].max()
+    
+    center_lat_rad = np.radians((lat_min + lat_max) / 2)
+    lat_span = lat_max - lat_min
+    lon_span = (lon_max - lon_min) * np.cos(center_lat_rad)
+    
+    aspect_ratio = lon_span / lat_span if lat_span > 0 else 1.0
+    
+    MAX_BINS = 50
+    if aspect_ratio >= 1:
+        lon_bins = MAX_BINS
+        lat_bins = max(int(MAX_BINS / aspect_ratio), 1)
+    else:
+        lat_bins = MAX_BINS
+        lon_bins = max(int(MAX_BINS * aspect_ratio), 1)
+
+    df['lat_bin'] = pd.cut(df['lat'], bins=lat_bins, labels=False)
+    df['lon_bin'] = pd.cut(df['lon'], bins=lon_bins, labels=False)
 
     # 1. Action Bar Chart
     plt.figure(figsize=(8, 5))
@@ -110,7 +126,7 @@ def e2e_visualize(master_parquet: str, payload_json: str, output_dir: str):
         plt.figure(figsize=(10, 8))
         pivot = df.pivot_table(index='lat_bin', columns='lon_bin', values=col, aggfunc='mean')
         pivot = pivot.sort_index(ascending=False)
-        sns.heatmap(pivot, cmap=cmap, annot=False, xticklabels=False, yticklabels=False)
+        sns.heatmap(pivot, cmap=cmap, annot=False, xticklabels=False, yticklabels=False, square=True)
         plt.title(f"Heatmap: {col} ({data_label})")
         plt.tight_layout()
         plt.savefig(os.path.join(output_dir, f"heatmap_{col}.png"), dpi=150)
@@ -129,7 +145,7 @@ def e2e_visualize(master_parquet: str, payload_json: str, output_dir: str):
     pivot_action = pivot_action.sort_index(ascending=False)
     cmap_action = sns.color_palette(["#94A3B8", "#16A34A", "#D97706", "#DC2626"])
     sns.heatmap(pivot_action, cmap=cmap_action, annot=False, cbar=False,
-                xticklabels=False, yticklabels=False)
+                xticklabels=False, yticklabels=False, square=True)
     plt.title(f"Prescription Action Map ({data_label})")
     legend_elements = [
         Patch(facecolor='#DC2626', label='Targeted Deep Tillage'),
