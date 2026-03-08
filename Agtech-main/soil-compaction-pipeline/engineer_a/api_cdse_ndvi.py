@@ -119,52 +119,90 @@ def _fetch_cdse_ndvi_sync(
     """Synchronous CDSE fetch — runs in a thread."""
     conn = get_auth_connection()
 
-    if date_range is None:
-        end = datetime.utcnow()
-        start = end - timedelta(days=14)
-        date_range = (start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d"))
-
     bbox = boundary.get_bounds()
     spatial_extent = {
         "west": bbox[0], "south": bbox[1],
         "east": bbox[2], "north": bbox[3],
     }
 
-    logger.info("Submitting openEO graph: NDVI %s, dates %s", spatial_extent, date_range)
+    # Try progressively wider temporal windows until we get real pixels.
+    # Iowa (and much of the Midwest) can be cloud-covered for weeks at a time
+    # during winter/spring, so 14 days is far too narrow.
+    if date_range is not None:
+        windows_to_try = [date_range]
+    else:
+        end = datetime.utcnow()
+        windows_to_try = [
+            # 1st attempt: last 90 days
+            (
+                (end - timedelta(days=90)).strftime("%Y-%m-%d"),
+                end.strftime("%Y-%m-%d"),
+            ),
+            # 2nd attempt: last 180 days
+            (
+                (end - timedelta(days=180)).strftime("%Y-%m-%d"),
+                end.strftime("%Y-%m-%d"),
+            ),
+            # 3rd attempt: last known peak growing season (previous summer)
+            (
+                f"{end.year - 1}-06-01",
+                f"{end.year - 1}-09-30",
+            ),
+        ]
 
-    # Build the processing graph
-    cube = conn.load_collection(
-        "SENTINEL2_L2A",
-        spatial_extent=spatial_extent,
-        temporal_extent=list(date_range),
-        bands=["B04", "B08", "SCL"],
+    last_gdf = None
+    for attempt_idx, dr in enumerate(windows_to_try):
+        logger.info(
+            "CDSE attempt %d/%d: NDVI %s, dates %s",
+            attempt_idx + 1, len(windows_to_try), spatial_extent, dr,
+        )
+
+        cube = conn.load_collection(
+            "SENTINEL2_L2A",
+            spatial_extent=spatial_extent,
+            temporal_extent=list(dr),
+            bands=["B04", "B08", "SCL"],
+        )
+
+        # SCL cloud mask: remove cloud shadow (3), cloud med/high (8,9),
+        # thin cirrus (10), snow/ice (11)
+        scl = cube.band("SCL")
+        mask = (scl == 3) | (scl == 8) | (scl == 9) | (scl == 10) | (scl == 11)
+        cube = cube.mask(mask)
+
+        # NDVI = (B08 - B04) / (B08 + B04)
+        b08 = cube.band("B08")
+        b04 = cube.band("B04")
+        ndvi = (b08 - b04) / (b08 + b04)
+
+        # Temporal median
+        ndvi_median = ndvi.reduce_dimension(dimension="t", reducer="median")
+
+        result_bytes = ndvi_median.download(format="GTiff")
+        logger.info("CDSE download complete: %d bytes", len(result_bytes))
+
+        gdf = _geotiff_to_geodataframe(result_bytes)
+        last_gdf = gdf
+
+        if len(gdf) > 0:
+            logger.info(
+                "CDSE NDVI: %d LIVE pixels retrieved (window: %s to %s)",
+                len(gdf), dr[0], dr[1],
+            )
+            return gdf
+
+        logger.warning(
+            "CDSE returned 0 valid pixels for window %s to %s "
+            "(100%% cloud cover). %s",
+            dr[0], dr[1],
+            "Trying wider window..." if attempt_idx < len(windows_to_try) - 1
+            else "All windows exhausted.",
+        )
+
+    raise PipelineError(
+        "CDSE returned 0 valid NDVI pixels after trying all temporal windows. "
+        "The field may be perpetually cloud-covered in available imagery."
     )
-
-    # SCL cloud mask: keep vegetation (4) and bare soil (5)
-    scl = cube.band("SCL")
-    mask = (scl == 3) | (scl == 8) | (scl == 9) | (scl == 10) | (scl == 11)
-    cube = cube.mask(mask)
-
-    # NDVI = (B08 - B04) / (B08 + B04)
-    b08 = cube.band("B08")
-    b04 = cube.band("B04")
-    ndvi = (b08 - b04) / (b08 + b04)
-
-    # Temporal median
-    ndvi_median = ndvi.reduce_dimension(dimension="t", reducer="median")
-
-    # Download as GeoTIFF into memory
-    result_bytes = ndvi_median.download(format="GTiff")
-    logger.info("CDSE download complete: %d bytes", len(result_bytes))
-
-    # Parse GeoTIFF -> GeoDataFrame
-    gdf = _geotiff_to_geodataframe(result_bytes)
-
-    if len(gdf) == 0:
-        raise PipelineError("CDSE returned 0 valid NDVI pixels after cloud masking")
-
-    logger.info("CDSE NDVI: %d LIVE pixels retrieved", len(gdf))
-    return gdf
 
 
 def _geotiff_to_geodataframe(tiff_bytes: bytes) -> gpd.GeoDataFrame:

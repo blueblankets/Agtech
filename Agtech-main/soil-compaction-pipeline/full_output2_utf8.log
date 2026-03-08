@@ -1,0 +1,104 @@
+﻿python : INFO:engineer_a.ingest:Initializing Stage 1 Data 
+Gathering...
+At line:1 char:114
++ ... -pipeline"; python 
+c:/Users/foodg/OneDrive/Documents/Kalshi_projects/ ...
++                 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif    ied: 
+(INFO:engineer_a...ta Gatherin    g...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom    mandError
+ 
+INFO:engineer_a.api_cdse_ndvi:Connecting to CDSE openEO...
+INFO:openeo.config:Loaded openEO client config from sources: []
+INFO:engineer_a.api_asabe_telemetry:ASABE equipment selected: 4WD 
+Articulated 520hp
+INFO:engineer_a.api_asabe_telemetry:  Dynamic weight: 23995 kg, 
+tire width: 1.420 m
+INFO:engineer_a.api_asabe_telemetry:  Implement width: 12.0 m, 
+effective swath: 12.6 m
+INFO:engineer_a.api_asabe_telemetry:ASABE telemetry: 5794 
+breadcrumbs (4WD Articulated 520hp, 23995 kg, 1.420 m tire)
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids WCS connectivity 
+confirmed
+INFO:engineer_a.api_soilgrids_wcs:Fetching WCS Coverage: 
+clay_5-15cm_Q0.5
+INFO:engineer_a.api_soilgrids_wcs:Fetching WCS Coverage: 
+bdod_5-15cm_Q0.5
+INFO:engineer_a.api_soilgrids_wcs:WCS raster shape: 2 x 2
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids LIVE: 4 cells (clay 
+25.6-28.7%, bd 1.49-1.51 g/cm3)
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids returned LIVE data: 4 
+cells
+INFO:openeo.rest.connection:Found OIDC providers: ['CDSE']
+INFO:openeo.rest.connection:No OIDC provider given, but only one 
+available: 'CDSE'. Using that one.
+INFO:openeo.rest.connection:Using default client_id 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e' from OIDC provider 'CDSE' 
+info.
+INFO:openeo.rest.connection:Found refresh token: trying refresh 
+token based authentication.
+INFO:openeo.rest.auth.oidc:Doing 'refresh_token' token request 'http
+s://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openi
+d-connect/token' with post data fields ['grant_type', 'client_id', 
+'refresh_token'] (client_id 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e')
+INFO:openeo.rest.connection:Obtained tokens: ['access_token', 
+'id_token', 'refresh_token']
+INFO:openeo.rest.auth.config:Storing refresh token for issuer 
+'https://identity.dataspace.copernicus.eu/auth/realms/CDSE' (client 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e')
+INFO:engineer_a.api_cdse_ndvi:CDSE OIDC authentication successful
+INFO:engineer_a.api_cdse_ndvi:CDSE attempt 1/3: NDVI {'west': 
+-93.59374, 'south': 41.513, 'east': -93.59, 'north': 41.51654}, 
+dates ('2025-12-08', '2026-03-08')
+INFO:engineer_a.api_cdse_ndvi:CDSE download complete: 5331 bytes
+INFO:engineer_a.api_cdse_ndvi:CDSE NDVI: 1312 LIVE pixels retrieved 
+(window: 2025-12-08 to 2026-03-08)
+INFO:engineer_a.api_cdse_ndvi:CDSE returned LIVE data: 1312 pixels
+INFO:engineer_a.ingest:NDVI: 1312 features, Soil: 4 features, 
+Tractor: 5794 features
+INFO:engineer_a.ingest:Projecting DataFrames to EPSG:3857 for 
+spatial alignment...
+INFO:engineer_a.ingest:Alignment: 1312 NDVI pixels, 4 soil cells, 
+5794 tractor points
+INFO:engineer_a.ingest:Joining SoilGrids data (nearest)...
+INFO:engineer_a.ingest:Joining ASABE telemetry (nearest, max 5m)...
+INFO:engineer_a.ingest:Running Validation Gauntlet...
+INFO:engineer_a.validate:Validation gauntlet starting: 1312 pixels
+INFO:engineer_a.validate:141 pixels have NDVI outside crop 
+plausibility [0.2, 0.9] (informational)
+INFO:engineer_a.validate:Validation complete: 1312/1312 valid, 0 
+invalid
+INFO:engineer_a.ingest:Serializing 1312 valid pixels to 
+pipeline_data\master_df.parquet
+INFO:engineer_a.ingest:Manifest written. API health: {'API A: CDSE 
+(NDVI)': 'LIVE', 'API B: SoilGrids (WCS)': 'LIVE', 'API C: ASABE 
+(Telemetry)': 'SIMULATED (5794 points)'}
+Authenticated using refresh token.
+
+=== MASTER DF AFTER VALIDATION ===
+Shape: (1312, 10)
+Columns: ['pixel_id', 'lat', 'lon', 'ndvi', 'clay_pct', 'bulk_density', 'equipment_weight_kg', 'tire_width_m', 'data_valid', 'invalid_fields']
+
+NDVI stats:
+  Total rows: 1312
+  NDVI NaN count: 0
+  NDVI non-NaN count: 1312
+  NDVI min: 0.06032417342066765, max: 0.7767136693000793
+
+data_valid stats:
+  Valid: 1312
+  Invalid: 0
+
+invalid_fields value counts:
+
+First 5 rows:
+  pixel_id        lat        lon  ...  tire_width_m  data_valid  invalid_fields
+0  px_0000  41.516579 -93.593768  ...           NaN        True                
+1  px_0001  41.516580 -93.593648  ...           NaN        True                
+2  px_0002  41.516580 -93.593528  ...           NaN        True                
+3  px_0003  41.516581 -93.593409  ...           NaN        True                
+4  px_0004  41.516582 -93.593289  ...           NaN        True                
+
+[5 rows x 10 columns]

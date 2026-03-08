@@ -97,7 +97,7 @@ async def run_e2e():
     logger.info("=" * 60)
 
     payload_path = os.path.join(pipeline_data_dir, "final_payload.json")
-    verify_and_visualize(payload_path, parquet_path, viz_dir)
+    e2e_visualize(parquet_path, payload_path, viz_dir)
 
     logger.info("=" * 60)
     logger.info("E2E PIPELINE COMPLETE")

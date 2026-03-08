@@ -1,0 +1,111 @@
+﻿python : INFO:engineer_a.ingest:Initializing Stage 1 Data 
+Gathering...
+At line:1 char:114
++ ... -pipeline"; python 
+c:/Users/foodg/OneDrive/Documents/Kalshi_projects/ ...
++                 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (INFO:engineer_a...ta G 
+   athering...:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+INFO:engineer_a.api_cdse_ndvi:Connecting to CDSE openEO...
+INFO:openeo.config:Loaded openEO client config from sources: []
+INFO:engineer_a.api_asabe_telemetry:ASABE equipment selected: 
+Row-Crop Tractor 150hp
+INFO:engineer_a.api_asabe_telemetry:  Dynamic weight: 7638 kg, tire 
+width: 0.384 m
+INFO:engineer_a.api_asabe_telemetry:  Implement width: 6.0 m, 
+effective swath: 6.3 m
+INFO:engineer_a.api_asabe_telemetry:ASABE telemetry: 11586 
+breadcrumbs (Row-Crop Tractor 150hp, 7638 kg, 0.384 m tire)
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids WCS connectivity 
+confirmed
+INFO:openeo.rest.connection:Found OIDC providers: ['CDSE']
+INFO:openeo.rest.connection:No OIDC provider given, but only one 
+available: 'CDSE'. Using that one.
+INFO:engineer_a.api_soilgrids_wcs:Fetching WCS Coverage: 
+clay_5-15cm_Q0.5
+INFO:engineer_a.api_soilgrids_wcs:Fetching WCS Coverage: 
+bdod_5-15cm_Q0.5
+INFO:openeo.rest.connection:Using default client_id 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e' from OIDC provider 'CDSE' 
+info.
+INFO:openeo.rest.connection:Found refresh token: trying refresh 
+token based authentication.
+INFO:openeo.rest.auth.oidc:Doing 'refresh_token' token request 'http
+s://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openi
+d-connect/token' with post data fields ['grant_type', 'client_id', 
+'refresh_token'] (client_id 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e')
+INFO:engineer_a.api_soilgrids_wcs:WCS raster shape: 2 x 2
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids LIVE: 4 cells (clay 
+25.6-28.7%, bd 1.49-1.51 g/cm3)
+INFO:engineer_a.api_soilgrids_wcs:SoilGrids returned LIVE data: 4 
+cells
+INFO:openeo.rest.connection:Obtained tokens: ['access_token', 
+'id_token', 'refresh_token']
+INFO:openeo.rest.auth.config:Storing refresh token for issuer 
+'https://identity.dataspace.copernicus.eu/auth/realms/CDSE' (client 
+'sh-b1c3a958-52d4-40fe-a333-153595d1c71e')
+INFO:engineer_a.api_cdse_ndvi:CDSE OIDC authentication successful
+INFO:engineer_a.api_cdse_ndvi:Submitting openEO graph: NDVI 
+{'west': -93.59374, 'south': 41.513, 'east': -93.59, 'north': 
+41.51654}, dates ('2026-02-22', '2026-03-08')
+INFO:engineer_a.api_cdse_ndvi:CDSE download complete: 523 bytes
+ERROR:engineer_a.api_cdse_ndvi:CDSE NDVI fetch FAILED: CDSE 
+returned 0 valid NDVI pixels after cloud masking
+ERROR:engineer_a.api_cdse_ndvi:Falling back to synthetic NDVI 
+generation
+WARNING:engineer_a.api_cdse_ndvi:===================================
+=========================
+WARNING:engineer_a.api_cdse_ndvi:CDSE API UNAVAILABLE ù GENERATING 
+SYNTHETIC NDVI
+WARNING:engineer_a.api_cdse_ndvi:This is NOT real satellite data.
+WARNING:engineer_a.api_cdse_ndvi:===================================
+=========================
+INFO:engineer_a.api_cdse_ndvi:Synthetic NDVI: 1599 pixels generated
+INFO:engineer_a.ingest:NDVI: 1599 features, Soil: 4 features, 
+Tractor: 11586 features
+INFO:engineer_a.ingest:Projecting DataFrames to EPSG:3857 for 
+spatial alignment...
+INFO:engineer_a.ingest:Alignment: 1599 NDVI pixels, 4 soil cells, 
+11586 tractor points
+INFO:engineer_a.ingest:Joining SoilGrids data (nearest)...
+INFO:engineer_a.ingest:Joining ASABE telemetry (nearest, max 5m)...
+INFO:engineer_a.ingest:Running Validation Gauntlet...
+INFO:engineer_a.validate:Validation gauntlet starting: 1599 pixels
+INFO:engineer_a.validate:Validation complete: 1599/1599 valid, 0 
+invalid
+INFO:engineer_a.ingest:Serializing 1599 valid pixels to 
+pipeline_data\master_df.parquet
+INFO:engineer_a.ingest:Manifest written. API health: {'API A: CDSE 
+(NDVI)': 'SYNTHETIC (CDSE unreachable)', 'API B: SoilGrids (WCS)': 
+'LIVE', 'API C: ASABE (Telemetry)': 'SIMULATED (11586 points)'}
+Authenticated using refresh token.
+
+=== MASTER DF AFTER VALIDATION ===
+Shape: (1599, 10)
+Columns: ['pixel_id', 'lat', 'lon', 'ndvi', 'clay_pct', 'bulk_density', 'equipment_weight_kg', 'tire_width_m', 'data_valid', 'invalid_fields']
+
+NDVI stats:
+  Total rows: 1599
+  NDVI NaN count: 0
+  NDVI non-NaN count: 1599
+  NDVI min: 0.48403289914131165, max: 0.7984816431999207
+
+data_valid stats:
+  Valid: 1599
+  Invalid: 0
+
+invalid_fields value counts:
+
+First 5 rows:
+  pixel_id       lat       lon  ...  tire_width_m  data_valid  invalid_fields
+0  px_0000  41.51309 -93.59365  ...         0.384        True                
+1  px_0001  41.51318 -93.59365  ...         0.384        True                
+2  px_0002  41.51327 -93.59365  ...         0.384        True                
+3  px_0003  41.51336 -93.59365  ...         0.384        True                
+4  px_0004  41.51345 -93.59365  ...         0.384        True                
+
+[5 rows x 10 columns]

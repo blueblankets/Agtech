@@ -63,8 +63,10 @@ def validate_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         "tire_width_m": GLOBAL_BOUNDS["tire_width_m"],
     }
 
-    # Equipment cols are NaN-exempt (no tractor pass = valid state)
-    nan_exempt_cols = {"equipment_weight_kg", "tire_width_m"}
+    # Equipment cols AND soil cols are NaN-exempt:
+    #   - equipment: NaN means no tractor pass within 5m (valid state per spec)
+    #   - soil: NaN means SoilGrids WCS was unavailable (pixel still valid for NDVI-only analysis)
+    nan_exempt_cols = {"equipment_weight_kg", "tire_width_m", "clay_pct", "bulk_density"}
 
     for col, (lo, hi) in bounds_map.items():
         if col not in df.columns:
