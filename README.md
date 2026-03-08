@@ -50,15 +50,15 @@ Installation
 
  \* Clone the repository and install dependencies:
 
-   pip install streamlit geopandas xgboost mapie openeo owslib
+   pip install flask geopandas xgboost mapie openeo owslib
 
  \* Configure your config.yaml with your CDSE OIDC credentials and API flags.
 
 Running the App
 
-Launch the Streamlit dashboard:
+Launch the Flask dashboard:
 
-streamlit run engineer\_c/app.py
+flask run engineer\_c/app.py
 
 "Judge Mode" (Fallback System)
 
