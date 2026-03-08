@@ -1,0 +1,90 @@
+{
+  "field_summary": "This field exhibits widespread moderate to severe vegetation stress (mean NDVI 0.389) across 100% of its area, suggesting potential root restriction or nutrient limitations. However, soil stress levels (mean 0.149 MPa) and bulk density (mean 1.47 g/cm\u00b3) are well below thresholds for severe physical compaction. Economic analysis indicates that mechanical tillage and soil amendments are not currently viable due to an extremely low Return on Investment (mean ROI 0.038).",
+  "risk_assessment": "The highest risk for this field is the pervasive vegetation stress indicated by low NDVI values (mean 0.389, 100% of pixels below 0.70). This suggests that plant roots are not accessing sufficient water or nutrients, potentially due to subtle soil structure issues or nutrient imbalances not captured by the compaction metrics. While direct soil compaction stress (mean 0.149 MPa) and bulk density (1.47 g/cm\u00b3) are not at critical levels, the low NDVI warrants intervention. The economic risk is also high, as current conditions do not justify costly mechanical or chemical interventions.",
+  "recommendations": [
+    {
+      "action_priority": 1,
+      "action_description": "Mechanical Tillage Protocol",
+      "implement_type": "None",
+      "operating_depth_cm": "N/A",
+      "amendment_type": "N/A",
+      "amendment_rate": "N/A",
+      "cover_crop_species": "N/A",
+      "rationale": "Mechanical tillage is not recommended. The mean vertical stress (0.149 MPa) is significantly below the 1.5 MPa threshold for compaction remediation, and the mean bulk density (1.47 g/cm\u00b3) is below the 1.6 g/cm\u00b3 threshold for severe compaction. Furthermore, the mean ROI of 0.038 is far below the 0.8 threshold, making mechanical intervention economically unviable at this time."
+    },
+    {
+      "action_priority": 2,
+      "action_description": "Soil Amendment Protocol",
+      "implement_type": "N/A",
+      "operating_depth_cm": "N/A",
+      "amendment_type": "None",
+      "amendment_rate": "N/A",
+      "cover_crop_species": "N/A",
+      "rationale": "Soil amendments are not recommended at this time. While the mean clay content of 18.4% would typically suggest humic acid as a beneficial amendment for aggregate stability and water holding capacity, the extremely low mean ROI of 0.038 dictates that no amendments are economically justified. Focus on biological methods first."
+    },
+    {
+      "action_priority": 3,
+      "action_description": "Biological Drilling (Cover Crop) Protocol",
+      "implement_type": "Broadcast Seeder or Drill",
+      "operating_depth_cm": "1-2 cm (seeding depth)",
+      "amendment_type": "N/A",
+      "amendment_rate": "N/A",
+      "cover_crop_species": "Immediately seed a multi-species cover crop cocktail. Mandatory Taproots: Daikon/tillage radish, Turnips, or Rapeseed. Mandatory Fibrous Roots: Cereal rye, Oats, or Annual ryegrass. Recommended Legumes: Crimson clover or Hairy vetch.",
+      "rationale": "Given the widespread vegetation stress (mean NDVI 0.389) and the economic non-viability of mechanical or chemical interventions, a multi-species cover crop cocktail is the most cost-effective and agronomically sound strategy. This will biologically stabilize the soil, create biopores, improve aggregate stability, enhance water infiltration, and contribute to organic matter accumulation, addressing the root causes of vegetation stress over time. Reassess soil health and ROI next season."
+    }
+  ],
+  "economic_outlook": "The economic analysis indicates a mean ROI of 0.038, with a maximum of 0.045. This is significantly below the 0.8 threshold required for any mechanical tillage or amendment to be considered economically viable. Therefore, the recommended strategy is to deploy cover crops only, which represents a lower-cost biological intervention, and to reassess the field's condition and economic viability for further interventions in the next growing season. No specific dollar estimates for yield increase are provided due to the low ROI, as any investment beyond cover crops would result in a net loss.",
+  "confidence_note": "The mean prediction interval width for ripper depth is 11.3 cm, indicating moderate uncertainty in precise compaction layer depth if mechanical intervention were to be considered.",
+  "metadata": {
+    "model": "gemini-2.5-flash",
+    "generated_at": "2026-03-08T03:08:15.519882+00:00"
+  },
+  "input_summary": {
+    "total_pixels": 7954,
+    "valid_pixels": 7954,
+    "invalid_pixels": 0,
+    "action_distribution": {
+      "Monitor - Not Economically Viable": 6682,
+      "None": 1272
+    },
+    "stress_stats": {
+      "mean": 0.149,
+      "max": 0.15,
+      "p90": 0.15,
+      "p10": 0.149
+    },
+    "ndvi_stats": {
+      "mean": 0.389,
+      "min": 0.14,
+      "max": 0.677,
+      "pct_below_070": 100.0
+    },
+    "soil": {
+      "clay_pct_mean": 18.4,
+      "clay_pct_range": [
+        17.2,
+        20.5
+      ],
+      "bulk_density_mean": 1.47
+    },
+    "roi_stats": {
+      "mean": 0.038,
+      "max": 0.045,
+      "pct_above_1_2": 0.0
+    },
+    "confidence": {
+      "mean_interval_width_cm": 11.3,
+      "max_interval_width_cm": 11.9
+    },
+    "ripper_depth_stats": {
+      "mean": 30.7,
+      "p10": 30.0,
+      "p90": 31.2
+    },
+    "data_sources": {
+      "API A: CDSE (NDVI)": "LIVE",
+      "API B: SoilGrids (WCS)": "LIVE",
+      "API C: ASABE (Telemetry)": "SIMULATED (113802 points)"
+    }
+  }
+}

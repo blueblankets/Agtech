@@ -20,6 +20,7 @@ from engineer_a.ingest import ingest_and_align
 from engineer_b.main_pipeline import run_model_pipeline, save_final_payload
 from engineer_b.verify_and_visualize import verify_and_visualize
 from e2e_visualize import e2e_visualize
+from engineer_b.llm_insights import generate_insights
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 logger = logging.getLogger("e2e")
@@ -119,9 +120,24 @@ async def run_e2e():
     payload_path = os.path.join(pipeline_data_dir, "final_payload.json")
     e2e_visualize(parquet_path, payload_path, viz_dir)
 
+    # ═══════════════════════════════════════════════
+    # STAGE 6: LLM Insights
+    # ═══════════════════════════════════════════════
+    logger.info("=" * 60)
+    logger.info("STAGE 6: LLM INSIGHTS — Generating agronomic analysis")
+    logger.info("=" * 60)
+
+    manifest_path = os.path.join(pipeline_data_dir, "manifest.json")
+    insights = generate_insights(df_out, pipeline_data_dir, manifest_path)
+    print("\n--- LLM Insights ---")
+    print(f"Summary: {insights.get('field_summary', 'N/A')[:200]}...")
+    print(f"Recommendations: {len(insights.get('recommendations', []))} items")
+    print(f"Model: {insights.get('metadata', {}).get('model', 'unknown')}")
+
     logger.info("=" * 60)
     logger.info("E2E PIPELINE COMPLETE")
     logger.info(f"Heatmaps saved to: {viz_dir}")
+    logger.info(f"Insights saved to: {os.path.join(pipeline_data_dir, 'insights.json')}")
     logger.info("=" * 60)
 
 
