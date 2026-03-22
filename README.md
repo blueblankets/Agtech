@@ -67,3 +67,6 @@ To ensure the prototype remains functional for demonstrations even if external A
  \* If an API timeout occurs (>30s), the system automatically pulls physically plausible data from the mock\_data/ directory.
 
  \* The manifest.json will flag which layers are "live" vs. "mock" for full transparency.
+
+ Demo Video:
+ https://drive.google.com/file/d/1vyipW1A_UNMyp3WZwhoAAYQsu_BAMLC9/view?usp=sharing
