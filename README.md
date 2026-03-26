@@ -64,4 +64,3 @@ To ensure the prototype remains functional for demonstrations even if external A
 * The `manifest.json` will flag which layers are "live" vs. "mock" for full transparency.
 
 ---
-**Would you like me to generate a sample `config.yaml` template or a mock `final_payload.json` to help you visualize the data structure?**
