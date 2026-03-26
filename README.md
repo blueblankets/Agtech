@@ -31,6 +31,9 @@ The system is implemented as a 6-stage geospatial ML pipeline divided across thr
 * **GIS Export:** Users can download a zipped ESRI Shapefile bundle containing the prescription data for use in tractor GPS displays.
 
 ---
+### Demo Video of User Interface/Usage Guide: 
+![Demo](Demo Video.mp4)
+---
 
 ## Instructions for Running the Prototype
 
