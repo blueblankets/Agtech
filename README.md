@@ -32,7 +32,7 @@ The system is implemented as a 6-stage geospatial ML pipeline divided across thr
 
 ---
 ### Demo Video of User Interface/Usage Guide: 
-![Demo](Demo Video.mp4)
+
 ---
 
 ## Instructions for Running the Prototype
