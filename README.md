@@ -32,7 +32,7 @@ The system is implemented as a 6-stage geospatial ML pipeline divided across thr
 
 ---
 ### Demo Video of User Interface/Usage Guide: 
-
+[![CompactIQ Demo](**https://i9.ytimg.com/vi/3IK-2ezO4Rg/mq2.jpg?sqp=CMCgls4G-oaymwEmCMACELQB8quKqQMa8AEB-AGwBoAC4AOKAgwIABABGFwgZShIMA8=&rs=AOn4CLCOGqInykAz6pUOrtrW4kH1GysUfw**)]((https://youtu.be/3IK-2ezO4Rg))
 ---
 
 ## Instructions for Running the Prototype
